@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TripSplit — Charlie Cortes</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+/* ─── TOKENS ─────────────────────────────────────────────── */
+:root {
+  --bg:       #f7f8fa;
+  --surface:  #ffffff;
+  --surface2: #f0f2f5;
+  --surface3: #e8eaee;
+  --border:   #e2e5ea;
+  --border2:  #d0d4dc;
+  --muted:    #9ba3b0;
+  --dim:      #6b7280;
+  --body:     #374151;
+  --heading:  #111827;
+  --accent:   #2563eb;
+  --accent-h: #1d4ed8;
+  --accent-bg:#eff6ff;
+  --accent-bd:#bfdbfe;
+  --green:    #16a34a;
+  --green-bg: #f0fdf4;
+  --green-bd: #bbf7d0;
+  --red:      #dc2626;
+  --red-bg:   #fef2f2;
+  --red-bd:   #fecaca;
+  --amber:    #b45309;
+  --amber-bg: #fffbeb;
+  --amber-bd: #fde68a;
+  --r:        12px;
+  --r2:       8px;
+  --r3:       6px;
+  --shadow:   0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow2:  0 4px 12px rgba(0,0,0,.08);
+}
+/* ─── RESET ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Noto Sans Thai', 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--body); font-size: 14px; min-height: 100vh; overflow-x: hidden; }
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 9px; }
+
+/* ─── LAYOUT ─────────────────────────────────────────────── */
+.shell { display: grid; grid-template-columns: 288px 1fr; min-height: 100vh; }
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; }
+.canvas { padding: 0; display: flex; flex-direction: column; min-width: 0; }
+
+/* ─── TOPBAR ─────────────────────────────────────────────── */
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 20; box-shadow: var(--shadow); }
+.topbar-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 17px; color: var(--accent); letter-spacing: -0.02em; flex: 0 0 auto; }
+.topbar-trip { flex: 1; min-width: 0; }
+.trip-name-display { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 15px; color: var(--heading); display: flex; align-items: center; gap: 8px; cursor: pointer; width: fit-content; }
+.trip-name-display:hover .edit-hint { opacity: 1; }
+.edit-hint { opacity: 0; transition: .2s; font-size: 11px; color: var(--muted); font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 400; }
+.trip-name-input { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 15px; background: transparent; border: none; border-bottom: 2px solid var(--accent); color: var(--heading); outline: none; width: 260px; }
+.trip-subtitle { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.topbar-actions { display: flex; gap: 8px; margin-left: auto; flex-shrink: 0; }
+
+/* ─── SIDEBAR SECTIONS ───────────────────────────────────── */
+.sb-logo { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); }
+.sb-logo-text { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 16px; color: var(--accent); }
+.sb-logo-sub { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+.sb-sec { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.sb-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+.sb-label a { color: var(--accent); font-size: 10px; text-decoration: none; font-weight: 600; }
+.sb-bottom { margin-top: auto; padding: 14px 18px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
+
+/* ─── INPUTS ─────────────────────────────────────────────── */
+input[type=text], input[type=number], select, textarea {
+  width: 100%; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--r2);
+  color: var(--heading); padding: 8px 11px; font-size: 13px; font-family: 'Noto Sans Thai', 'Plus Jakarta Sans', sans-serif;
+  outline: none; transition: border-color .15s, box-shadow .15s; appearance: none;
+}
+input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+select option { background: var(--surface); }
+::placeholder { color: var(--muted); }
+
+/* ─── BUTTONS ────────────────────────────────────────────── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--r2); font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all .15s; white-space: nowrap; font-family: 'Noto Sans Thai', 'Plus Jakarta Sans', sans-serif; }
+.btn-lime { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-lime:hover { background: var(--accent-h); border-color: var(--accent-h); }
+.btn-ghost { background: var(--surface); color: var(--dim); border-color: var(--border2); }
+.btn-ghost:hover { background: var(--surface2); color: var(--heading); border-color: var(--border2); }
+.btn-rose { background: transparent; color: var(--red); border-color: var(--red-bd); }
+.btn-rose:hover { background: var(--red-bg); }
+.btn-violet { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-violet:hover { background: var(--accent-h); }
+.btn-amber { background: var(--surface); color: var(--amber); border-color: var(--amber-bd); font-weight: 600; }
+.btn-amber:hover { background: var(--amber-bg); }
+.ico { width: 28px; height: 28px; border-radius: var(--r3); display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; font-size: 11px; transition: .15s; }
+.ico:hover { background: var(--surface2); color: var(--body); border-color: var(--border2); }
+.ico.del:hover { color: var(--red); border-color: var(--red-bd); background: var(--red-bg); }
+.ico.edt:hover { color: var(--amber); border-color: var(--amber-bd); background: var(--amber-bg); }
+.ico.ok:hover { color: var(--green); border-color: var(--green-bd); background: var(--green-bg); }
+button:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ─── CHIPS ──────────────────────────────────────────────── */
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; border: 1px solid var(--border2); background: var(--surface); color: var(--dim); cursor: pointer; transition: .15s; user-select: none; }
+.chip:hover { border-color: var(--accent-bd); color: var(--accent); background: var(--accent-bg); }
+.chip.on { background: var(--accent-bg); border-color: var(--accent-bd); color: var(--accent); font-weight: 600; }
+.chip .cx { font-size: 9px; opacity: .45; margin-left: 1px; } .chip .cx:hover { opacity: 1; color: var(--red); }
+
+/* ─── SPLIT TOGGLE ───────────────────────────────────────── */
+.spl-toggle { display: flex; border: 1px solid var(--border2); border-radius: var(--r2); overflow: hidden; background: var(--surface2); }
+.spl-toggle input { display: none; }
+.spl-toggle label { flex: 1; text-align: center; padding: 7px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--dim); background: transparent; border-right: 1px solid var(--border); transition: .15s; }
+.spl-toggle label:last-of-type { border-right: none; }
+.spl-toggle input:checked + label { background: var(--accent); color: #fff; border-radius: calc(var(--r2) - 2px); }
+
+/* ─── FORM BLOCK ─────────────────────────────────────────── */
+.form-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r2); padding: 13px; }
+.row2 { display: grid; grid-template-columns: 1fr 90px; gap: 7px; margin-bottom: 7px; }
+.row3 { display: flex; gap: 6px; align-items: center; }
+.row3 input, .row3 select { flex: 1; }
+
+/* ─── SUM BOX ────────────────────────────────────────────── */
+.sum-box { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; padding: 6px 10px; border-radius: var(--r3); text-align: center; border: 1px solid; margin-bottom: 8px; }
+.sum-ok  { background: var(--green-bg); color: var(--green); border-color: var(--green-bd); }
+.sum-warn{ background: var(--amber-bg); color: var(--amber); border-color: var(--amber-bd); }
+.sum-err { background: var(--red-bg);   color: var(--red);   border-color: var(--red-bd); }
+
+/* ─── CANVAS CONTENT ─────────────────────────────────────── */
+.canvas-body { padding: 24px 28px; flex: 1; }
+
+/* ─── TRIP HERO ──────────────────────────────────────────── */
+.trip-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 20px 24px; margin-bottom: 22px; display: flex; gap: 0; box-shadow: var(--shadow); }
+.hero-stat { flex: 1; text-align: center; padding: 0 16px; border-right: 1px solid var(--border); }
+.hero-stat:last-child { border-right: none; }
+.hero-stat-val { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 26px; color: var(--accent); line-height: 1; }
+.hero-stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+
+/* ─── NET ROW ────────────────────────────────────────────── */
+.net-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 22px; }
+.net-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r2); padding: 14px 16px; box-shadow: var(--shadow); }
+.net-name { font-weight: 700; font-size: 13px; color: var(--heading); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.net-avatar { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.net-rows { display: flex; flex-direction: column; gap: 3px; }
+.net-row { display: flex; justify-content: space-between; font-size: 11px; }
+.net-row-label { color: var(--muted); }
+.net-total { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 17px; margin-top: 8px; }
+.pos { color: var(--green); } .neg { color: var(--red); } .zero { color: var(--muted); }
+
+/* ─── SETTLEMENTS ────────────────────────────────────────── */
+.settle-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 22px; }
+.settle-row { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r2); padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; box-shadow: var(--shadow); }
+.settle-arrow { color: var(--muted); font-size: 11px; }
+.settle-name { font-weight: 600; color: var(--heading); }
+.settle-amt { margin-left: auto; font-family: 'DM Mono', monospace; font-weight: 500; color: var(--amber); }
+.settle-badge { font-size: 10px; font-weight: 600; background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-bd); border-radius: 99px; padding: 2px 8px; }
+
+/* ─── SHOP GROUP ─────────────────────────────────────────── */
+.shop-group { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 18px; overflow: hidden; box-shadow: var(--shadow); }
+.shop-hd { background: var(--surface2); padding: 11px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+.shop-hd-name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 14px; flex: 1; color: var(--heading); }
+.shop-badge { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: var(--accent); background: var(--accent-bg); border: 1px solid var(--accent-bd); border-radius: 99px; padding: 2px 10px; }
+.tbl-wrap { overflow-x: auto; }
+table.dt { width: 100%; border-collapse: collapse; min-width: 560px; font-size: 13px; }
+.dt th { padding: 9px 14px; font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; background: var(--bg); }
+.dt td { padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: center; vertical-align: middle; white-space: nowrap; color: var(--body); }
+.dt tr:last-child td { border-bottom: none; }
+.dt tr:hover td { background: var(--bg); }
+.td-l { text-align: left !important; font-weight: 600; color: var(--heading) !important; }
+.dt-sticky { position: sticky; left: 0; background: var(--surface); z-index: 2; box-shadow: 3px 0 6px rgba(0,0,0,.05); }
+.dt-sticky-hd { position: sticky; left: 0; background: var(--bg); z-index: 3; box-shadow: 3px 0 6px rgba(0,0,0,.05); }
+.mono-val { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: var(--accent); }
+.dash { color: var(--border2); }
+.payer-badge { font-size: 10px; font-weight: 600; background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); border-radius: 99px; padding: 2px 8px; }
+
+/* ─── EMPTY ──────────────────────────────────────────────── */
+.empty { text-align: center; padding: 56px 24px; color: var(--muted); }
+.empty i { font-size: 32px; margin-bottom: 12px; display: block; color: var(--border2); }
+.empty p { font-size: 13px; line-height: 1.6; }
+
+/* ─── SECTION HDR ────────────────────────────────────────── */
+.sec-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sec-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 14px; color: var(--heading); display: flex; align-items: center; gap: 8px; }
+.sec-title-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+/* ─── MODAL ──────────────────────────────────────────────── */
+.overlay { position: fixed; inset: 0; background: rgba(17,24,39,.4); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); width: 100%; max-width: 520px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow2); }
+.modal-lg { max-width: 780px; }
+.modal-hd { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--surface); }
+.modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 15px; flex: 1; color: var(--heading); }
+.modal-body { padding: 20px; overflow-y: auto; flex: 1; background: var(--surface); }
+.modal-ft { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; background: var(--bg); }
+
+/* ─── RECEIPT ────────────────────────────────────────────── */
+.receipt-wrap { overflow: auto; background: var(--surface2); display: flex; justify-content: center; padding: 28px; flex: 1; }
+.receipt { background: #fff; color: #111; font-family: 'Noto Sans Thai', sans-serif; padding: 40px; width: max-content; min-width: 900px; display: flex; flex-direction: column; gap: 28px; }
+.receipt-head { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 16px; border-bottom: 2px solid #111; }
+.receipt-h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 24px; }
+.receipt-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.receipt-tbl th { background: #1e293b; color: #fff; padding: 9px 14px; text-align: center; white-space: nowrap; }
+.receipt-tbl th.tl { text-align: left; }
+.receipt-tbl td { padding: 9px 14px; border: 1px solid #e5e7eb; text-align: center; white-space: nowrap; }
+.receipt-tbl td.tl { text-align: left; font-weight: 600; }
+.receipt-shop-row td { background: #eff6ff; font-weight: 700; color: #1e40af; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.receipt-foot td { background: #f8fafc; font-weight: 800; border-top: 2px solid #cbd5e1; }
+.receipt-net { display: flex; gap: 16px; }
+.receipt-net-card { flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; text-align: center; }
+.receipt-net-name { font-weight: 800; font-size: 14px; margin-bottom: 6px; }
+.receipt-net-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
+.receipt-net-pos { color: #16a34a; } .receipt-net-neg { color: #dc2626; } .receipt-net-zero { color: #94a3b8; }
+.receipt-qr-area { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; text-align: center; }
+.receipt-footer { text-align: center; font-size: 11px; color: #94a3b8; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+
+/* ─── TOAST ──────────────────────────────────────────────── */
+.toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; }
+.toast-inner { background: var(--heading); color: #fff; padding: 10px 20px; border-radius: var(--r2); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow2); }
+
+/* ─── BACKUP LIST ────────────────────────────────────────── */
+.bk-item { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r2); padding: 11px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.bk-item.active { border-color: var(--accent-bd); background: var(--accent-bg); }
+.bk-name { font-weight: 600; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--heading); }
+.bk-time { font-size: 10px; color: var(--muted); }
+
+/* ─── TRIP SWITCHER ──────────────────────────────────────── */
+.trip-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r2); padding: 12px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 6px; cursor: pointer; transition: .15s; }
+.trip-card:hover { border-color: var(--accent-bd); background: var(--accent-bg); }
+.trip-card.active { border-color: var(--accent); background: var(--accent-bg); }
+.trip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.trip-card-name { font-weight: 700; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--heading); }
+.trip-card-meta { font-size: 10px; color: var(--muted); white-space: nowrap; }
+
+/* ─── QR UPLOAD ──────────────────────────────────────────── */
+.qr-label { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; border: 1.5px dashed var(--border2); border-radius: var(--r2); cursor: pointer; color: var(--muted); font-size: 12px; transition: .15s; }
+.qr-label:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+/* ─── AVATAR COLORS ──────────────────────────────────────── */
+.av-0 { background: #dbeafe; color: #1d4ed8; }
+.av-1 { background: #dcfce7; color: #15803d; }
+.av-2 { background: #fee2e2; color: #b91c1c; }
+.av-3 { background: #fef3c7; color: #92400e; }
+.av-4 { background: #ede9fe; color: #6d28d9; }
+.av-5 { background: #fce7f3; color: #9d174d; }
+
+/* ─── DIVIDER ────────────────────────────────────────────── */
+hr.div { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+
+/* ─── RESPONSIVE ─────────────────────────────────────────── */
+@media (max-width: 820px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { height: auto; position: relative; }
+  .canvas-body { padding: 16px; }
+  .topbar { padding: 12px 16px; }
+  .net-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TOAST -->
+<transition name="fade">
+  <div class="toast-wrap" v-if="toastMsg">
+    <div class="toast-inner"><i class="fa-solid fa-check"></i> {{ toastMsg }}</div>
+  </div>
+</transition>
+
+<!-- MODALS -->
+<div class="overlay" v-if="modal" @click.self="closeModal">
+
+  <!-- ── TRIP MANAGER ── -->
+  <div class="modal" v-if="modal === 'trips'">
+    <div class="modal-hd">
+      <span class="modal-title"><i class="fa-solid fa-plane-departure me-2" style="color:var(--accent)"></i>จัดการทริป</span>
+      <button class="ico" @click="closeModal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em;">สร้างทริปใหม่</div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" v-model="newTripName" @keyup.enter="createTrip" placeholder="ชื่อทริป... เช่น เที่ยวเชียงใหม่ พ.ย. 67" style="flex:1;">
+          <button class="btn btn-lime" @click="createTrip"><i class="fa-solid fa-plus"></i> สร้าง</button>
+        </div>
+      </div>
+      <hr class="div" style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em;">ทริปทั้งหมด ({{ trips.length }})</div>
+      <div v-if="trips.length === 0" class="empty" style="padding:24px;"><i class="fa-solid fa-plane"></i><p>ยังไม่มีทริป</p></div>
+      <div v-for="(t, i) in trips" :key="t.id" class="trip-card" :class="{active: currentTripId === t.id}" @click="switchTrip(t.id)">
+        <div class="trip-dot" :style="{background: tripColors[i % tripColors.length]}"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="trip-card-name">{{ t.name }}</div>
+          <div class="trip-card-meta">{{ t.people.length }} คน · {{ t.expenses.length }} รายการ · {{ formatNumber(t.expenses.reduce((s,e)=>s+e.price,0)) }} ฿</div>
+        </div>
+        <button class="ico del" @click.stop="deleteTrip(t.id)"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" @click="exportAllTrips"><i class="fa-solid fa-download"></i> Export ทั้งหมด</button>
+      <button class="btn btn-ghost" @click="triggerImport"><i class="fa-solid fa-upload"></i> Import</button>
+      <input type="file" id="importFile" hidden accept=".json" @change="importTrips">
+    </div>
+  </div>
+
+  <!-- ── SHOPS MANAGER ── -->
+  <div class="modal" v-if="modal === 'shops'">
+    <div class="modal-hd">
+      <span class="modal-title"><i class="fa-solid fa-store me-2" style="color:var(--accent)"></i>คลังร้านค้า</span>
+      <button class="ico" @click="closeModal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div v-if="trip.savedShops.length === 0" class="empty" style="padding:24px;"><i class="fa-solid fa-store"></i><p>ยังไม่มีร้าน</p></div>
+      <div v-for="(s, i) in trip.savedShops" :key="i" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <div v-if="editShopIdx === i" style="display:flex;gap:6px;flex:1;">
+          <input type="text" v-model="tempShopName" @keyup.enter="saveShopEdit(i)" style="flex:1;font-size:12px;">
+          <button class="ico ok" @click="saveShopEdit(i)"><i class="fa-solid fa-check"></i></button>
+          <button class="ico" @click="editShopIdx=-1"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <template v-else>
+          <span style="flex:1;font-weight:600;font-size:13px;cursor:pointer;" @click="pickShop(s)">{{ s }}</span>
+          <span style="font-size:11px;color:var(--muted);">{{ (trip.shopMemberMap[s]||[]).length }} คน</span>
+          <button class="ico edt" @click="editShopIdx=i; tempShopName=s"><i class="fa-solid fa-pen"></i></button>
+          <button class="ico del" @click="removeShop(i)"><i class="fa-solid fa-trash"></i></button>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BACKUP ── -->
+  <div class="modal" v-if="modal === 'backup'">
+    <div class="modal-hd">
+      <span class="modal-title"><i class="fa-solid fa-clock-rotate-left me-2" style="color:var(--accent)"></i>Backup ทริปปัจจุบัน</span>
+      <button class="ico" @click="closeModal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:6px;margin-bottom:14px;">
+        <button class="btn btn-lime" style="flex:1;justify-content:center;" @click="saveBk">
+          <i class="fa-solid fa-floppy-disk"></i> บันทึก Snapshot
+        </button>
+        <button class="btn btn-ghost" v-if="currentBkId && trip.backups.some(b=>b.id===currentBkId)" @click="updateBk">
+          <i class="fa-solid fa-rotate"></i> อัปเดต
+        </button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Snapshots</div>
+      <div v-if="trip.backups.length === 0" style="color:var(--muted);font-size:12px;text-align:center;padding:14px;">ยังไม่มี Snapshot</div>
+      <div v-for="(b, i) in trip.backups" :key="b.id" class="bk-item" :class="{active: currentBkId === b.id}">
+        <div style="flex:1;min-width:0;">
+          <div class="bk-name">{{ b.name }}</div>
+          <div class="bk-time">{{ b.time }}</div>
+        </div>
+        <button class="ico ok" @click="restoreBk(i)" title="โหลด"><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="ico del" @click="deleteBk(i)"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SUMMARY RECEIPT ── -->
+  <div class="modal modal-lg" v-if="modal === 'summary'" style="max-width:95vw;max-height:95vh;width:auto;">
+    <div class="modal-hd">
+      <span class="modal-title"><i class="fa-solid fa-receipt me-2" style="color:var(--accent)"></i>สรุปยอดทริป — {{ trip.name }}</span>
+      <div style="display:flex;gap:6px;margin-left:auto;margin-right:10px;">
+        <button class="btn btn-ghost" style="font-size:11px;" @click="autoFit"><i class="fa-solid fa-expand"></i></button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:8px 9px;" @click="zoom(-0.1)"><i class="fa-solid fa-minus"></i></button>
+        <button class="btn btn-ghost" style="font-size:11px;min-width:48px;justify-content:center;" @click="zoomLevel=1">{{ Math.round(zoomLevel*100) }}%</button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:8px 9px;" @click="zoom(0.1)"><i class="fa-solid fa-plus"></i></button>
+        <button class="btn btn-amber" style="font-size:11px;" @click="captureReceipt('jpg')"><i class="fa-solid fa-image"></i> JPG</button>
+        <button class="btn btn-ghost" style="font-size:11px;" @click="captureReceipt('png')"><i class="fa-solid fa-image"></i> PNG</button>
+      </div>
+      <button class="ico" @click="closeModal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="receipt-wrap" id="receiptScroll">
+      <div id="captureArea" class="receipt" :style="{transform:'scale('+zoomLevel+')', transformOrigin:'top center'}">
+        <!-- HEAD -->
+        <div class="receipt-head">
+          <div>
+            <div class="receipt-h1">🧾 {{ trip.name }}</div>
+            <div style="font-size:12px;color:#888;margin-top:4px;">{{ new Date().toLocaleDateString('th-TH',{dateStyle:'long'}) }}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:#aaa;">Grand Total</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:800;color:#111;">{{ formatNumber(totalTripPrice) }} ฿</div>
+          </div>
+        </div>
+        <!-- ITEM TABLE -->
+        <div>
+          <div style="font-weight:800;font-size:14px;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:8px;">รายละเอียดรายการ</div>
+          <table class="receipt-tbl">
+            <thead><tr>
+              <th class="tl" style="min-width:160px;">รายการ</th>
+              <th>ราคา</th>
+              <th v-for="p in trip.people" :key="p">{{ p }}</th>
+            </tr></thead>
+            <template v-for="g in groupedExpenses" :key="g.name">
+              <tbody>
+                <tr class="receipt-shop-row"><td :colspan="2+trip.people.length">📍 {{ g.name }}</td></tr>
+                <tr v-for="ex in g.items" :key="ex.id">
+                  <td class="tl">{{ ex.item }}</td>
+                  <td style="font-family:'JetBrains Mono',monospace;font-weight:700;">{{ formatNumber(ex.price) }}</td>
+                  <td v-for="p in trip.people" :key="p">{{ getAmt(ex,p) > 0 ? formatNumber(getAmt(ex,p)) : '—' }}</td>
+                </tr>
+                <tr class="receipt-foot">
+                  <td class="tl" style="color:#666;font-size:11px;">รวม {{ g.name }}</td>
+                  <td style="font-family:'JetBrains Mono',monospace;">{{ formatNumber(g.total) }}</td>
+                  <td v-for="p in trip.people" :key="p" style="font-family:'JetBrains Mono',monospace;color:#4c3ab3;">{{ getShopSub(g.items,p) > 0 ? formatNumber(getShopSub(g.items,p)) : '—' }}</td>
+                </tr>
+              </tbody>
+            </template>
+          </table>
+        </div>
+        <!-- NET -->
+        <div>
+          <div style="font-weight:800;font-size:14px;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:8px;">ยอดสุทธิแต่ละคน</div>
+          <div class="receipt-net">
+            <div v-for="p in summary" :key="p.name" class="receipt-net-card">
+              <div class="receipt-net-name">{{ p.name }}</div>
+              <div style="font-size:11px;color:#888;margin-bottom:4px;">จ่ายก่อน {{ formatNumber(p.paid) }} · ใช้ไป {{ formatNumber(p.consumed) }}</div>
+              <div class="receipt-net-val" :class="p.net>0?'receipt-net-pos':p.net<0?'receipt-net-neg':'receipt-net-zero'">
+                {{ p.net > 0 ? '+' : '' }}{{ formatNumber(p.net) }}
+              </div>
+              <div style="font-size:11px;font-weight:700;margin-top:4px;" :style="p.net>0?'color:#16a34a':p.net<0?'color:#dc2626':'color:#888'">{{ p.net > 0 ? '💚 รับคืน' : p.net < 0 ? '🔴 ต้องจ่าย' : '✅ สมดุล' }}</div>
+            </div>
+          </div>
+        </div>
+        <!-- SETTLEMENTS -->
+        <div v-if="settlements.length > 0">
+          <div style="font-weight:800;font-size:14px;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:8px;">โอนเงินเพื่อเคลียร์</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tr v-for="s in settlements" :key="s.from+s.to" style="border-bottom:1px solid #eee;">
+              <td style="padding:8px 4px;font-weight:700;">{{ s.from }}</td>
+              <td style="padding:8px 4px;color:#dc2626;font-size:12px;">→ โอน →</td>
+              <td style="padding:8px 4px;font-weight:700;">{{ s.to }}</td>
+              <td style="padding:8px 4px;text-align:right;font-family:'JetBrains Mono',monospace;font-weight:800;color:#b45309;">{{ formatNumber(s.amount) }} ฿</td>
+            </tr>
+          </table>
+        </div>
+        <!-- PAYMENT -->
+        <div class="receipt-qr-area">
+          <div style="font-weight:800;font-size:14px;margin-bottom:4px;">ช่องทางชำระเงิน</div>
+          <img v-if="trip.payment.qrImage" :src="trip.payment.qrImage" style="max-width:220px;border-radius:8px;">
+          <div v-if="!trip.payment.qrImage && trip.payment.type==='qrcode'" style="color:#aaa;font-size:12px;">ไม่ได้อัปโหลด QR</div>
+          <div v-if="trip.payment.type !== 'qrcode'" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;letter-spacing:1px;">{{ trip.payment.detail || '—' }}</div>
+          <div style="font-weight:700;font-size:15px;">{{ trip.payment.name }}</div>
+          <div style="font-size:11px;color:#aaa;">{{ trip.payment.type==='promptpay'?'พร้อมเพย์':trip.payment.type==='bank'?'บัญชีธนาคาร':'QR Code' }}{{ trip.payment.bankName?' · '+trip.payment.bankName:'' }}</div>
+        </div>
+        <div class="receipt-footer">TripSplit · by Charlie Cortes</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /overlay -->
+
+<!-- ═══════════ APP SHELL ═══════════ -->
+<div class="shell">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-text">✈ TripSplit</div>
+      <div class="sb-logo-sub">by Charlie Cortes</div>
+    </div>
+
+    <!-- Members -->
+    <div class="sb-sec">
+      <div class="sb-label">สมาชิก ({{ trip.people.length }})
+        <a href="#" @click.prevent="showMemberInput=!showMemberInput">{{ showMemberInput?'เสร็จ':'แก้ไข' }}</a>
+      </div>
+      <div v-if="showMemberInput" style="display:flex;gap:5px;margin-bottom:8px;">
+        <input type="text" v-model="newPerson" @keyup.enter="addPerson" placeholder="ชื่อสมาชิก..." style="font-size:12px;">
+        <button class="ico ok" @click="addPerson"><i class="fa-solid fa-plus"></i></button>
+      </div>
+      <div class="chips">
+        <span v-for="(p, i) in trip.people" :key="i" class="chip" style="cursor:default;">
+          <span class="av-{{ i%6 }}" style="width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;" :class="'av-'+(i%6)">{{ p[0] }}</span>
+          {{ p }}
+          <span class="cx" @click="removePerson(i)">✕</span>
+        </span>
+        <div v-if="trip.people.length===0" style="font-size:11px;color:var(--muted);">ยังไม่มีสมาชิก</div>
+      </div>
+    </div>
+
+    <!-- Shop -->
+    <div class="sb-sec">
+      <div class="sb-label">1 · ร้าน / สถานที่</div>
+      <div style="display:flex;gap:5px;margin-bottom:6px;">
+        <input type="text" v-model="currentShop" @change="onShopChange" @keyup.enter="addShop" placeholder="ชื่อร้าน..." style="flex:1;font-size:12px;">
+        <button class="ico ok" @click="addShop" title="บันทึกร้าน"><i class="fa-solid fa-check"></i></button>
+        <button class="ico" @click="modal='shops'" title="คลังร้าน"><i class="fa-solid fa-store"></i></button>
+      </div>
+      <select style="font-size:11px;margin-bottom:7px;" v-model="shopDefaultPayer" @change="onDefaultPayerChange">
+        <option value="">— คนจ่ายหลักของร้าน —</option>
+        <option v-for="p in trip.people" :value="p">{{ p }}</option>
+      </select>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;">
+        <span>เช็คอิน</span>
+        <span>
+          <a href="#" @click.prevent="toggleAllActive(true)" style="color:var(--accent);text-decoration:none;">ทั้งหมด</a> ·
+          <a href="#" @click.prevent="toggleAllActive(false)" style="color:var(--muted);text-decoration:none;">ล้าง</a>
+        </span>
+      </div>
+      <div class="chips" style="max-height:100px;overflow-y:auto;">
+        <span v-for="p in trip.people" :key="p" class="chip" :class="{on:activeMembers.includes(p)}" @click="toggleActive(p)">{{ p }}</span>
+      </div>
+    </div>
+
+    <!-- Add Item Form -->
+    <div class="sb-sec">
+      <div class="sb-label">2 · เพิ่มรายการ</div>
+      <div class="form-box">
+        <div class="row2">
+          <input type="text" v-model="form.item" @keyup.enter="saveExpense" placeholder="ชื่อรายการ" style="font-size:12px;">
+          <input type="number" v-model.number="form.price" placeholder="ราคา" style="font-size:12px;">
+        </div>
+        <select style="font-size:12px;margin-bottom:7px;" v-model="form.payer">
+          <option value="" disabled>คนจ่ายเงิน...</option>
+          <option v-for="p in trip.people" :value="p">{{ p }}</option>
+        </select>
+        <div class="spl-toggle" style="margin-bottom:7px;">
+          <input type="radio" id="sEq" value="equal" v-model="splitMode"><label for="sEq">หารเท่ากัน</label>
+          <input type="radio" id="sCu" value="custom" v-model="splitMode"><label for="sCu">ระบุเอง</label>
+        </div>
+        <div v-if="splitMode === 'equal'">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:5px;display:flex;justify-content:space-between;">
+            <span>ใครหารบ้าง?</span>
+            <span><a href="#" @click.prevent="toggleConsumers(true)" style="color:var(--accent);text-decoration:none;">ทั้งหมด</a> · <a href="#" @click.prevent="toggleConsumers(false)" style="color:var(--muted);text-decoration:none;">ล้าง</a></span>
+          </div>
+          <div class="chips">
+            <span v-for="p in activeMembers" :key="p" class="chip" :class="{on:form.consumers.includes(p)}" @click="toggleConsumer(p)">{{ p }}</span>
+          </div>
+        </div>
+        <div v-else>
+          <div class="sum-box" :class="customSumClass">{{ formatNumber(sumCustom) }} / {{ formatNumber(form.price||0) }}</div>
+          <div style="max-height:130px;overflow-y:auto;">
+            <div v-for="p in activeMembers" :key="p" style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+              <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);">{{ p }}</span>
+              <input type="number" :value="customAmounts[p]" @input="setCustom(p,$event)" placeholder="0" style="width:72px;text-align:right;font-size:12px;font-family:'JetBrains Mono',monospace;">
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-lime" style="width:100%;justify-content:center;margin-top:8px;" @click="saveExpense" :disabled="!formValid">
+          <i class="fa-solid" :class="editingId?'fa-floppy-disk':'fa-plus'"></i>
+          {{ editingId ? 'อัปเดตรายการ' : 'บันทึกรายการ' }}
+        </button>
+        <button v-if="editingId" class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:5px;" @click="cancelEdit">ยกเลิก</button>
+      </div>
+    </div>
+
+    <!-- Payment -->
+    <div class="sb-sec">
+      <div class="sb-label">ช่องทางรับเงิน</div>
+      <select style="font-size:12px;margin-bottom:6px;" v-model="trip.payment.type" @change="saveAll">
+        <option value="qrcode">QR Code</option>
+        <option value="promptpay">พร้อมเพย์</option>
+        <option value="bank">บัญชีธนาคาร</option>
+      </select>
+      <input v-if="trip.payment.type==='bank'" type="text" v-model="trip.payment.bankName" @change="saveAll" placeholder="ชื่อธนาคาร" style="font-size:12px;margin-bottom:5px;">
+      <input v-if="trip.payment.type!=='qrcode'" type="text" v-model="trip.payment.detail" @change="saveAll" placeholder="เลขบัญชี / เบอร์โทร" style="font-size:12px;margin-bottom:5px;">
+      <div v-if="trip.payment.type==='qrcode'">
+        <label class="qr-label">
+          <i class="fa-solid fa-qrcode" style="font-size:18px;"></i>
+          <span>อัปโหลด QR Code</span>
+          <input type="file" hidden @change="uploadQR" accept="image/*">
+        </label>
+        <div v-if="trip.payment.qrImage" style="text-align:center;margin-top:7px;">
+          <img :src="trip.payment.qrImage" style="height:64px;border-radius:6px;border:1px solid var(--border2);">
+          <button class="ico del" style="margin-top:4px;" @click="trip.payment.qrImage=null;saveAll()"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <input type="text" v-model="trip.payment.name" @change="saveAll" placeholder="ชื่อบัญชี" style="font-size:12px;margin-top:6px;">
+    </div>
+
+    <!-- Bottom -->
+    <div class="sb-bottom">
+      <button class="btn btn-ghost" style="justify-content:center;" @click="modal='trips'"><i class="fa-solid fa-plane-departure"></i> สลับทริป</button>
+      <button class="btn btn-ghost" style="justify-content:center;" @click="modal='backup'"><i class="fa-solid fa-clock-rotate-left"></i> Backup</button>
+      <button class="btn btn-rose" style="justify-content:center;" @click="resetTrip"><i class="fa-solid fa-rotate-left"></i> รีเซ็ตทริปนี้</button>
+    </div>
+  </aside>
+
+  <!-- ─── CANVAS ─── -->
+  <div class="canvas">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-logo">✈</div>
+      <div class="topbar-trip">
+        <div v-if="!editingTripName" class="trip-name-display" @click="startEditTripName">
+          {{ trip.name }}
+          <span class="edit-hint"><i class="fa-solid fa-pen" style="font-size:10px;"></i> คลิกแก้ไข</span>
+        </div>
+        <input v-else type="text" class="trip-name-input" v-model="tempTripName" @keyup.enter="saveTripName" @blur="saveTripName" autofocus>
+        <div class="trip-subtitle">{{ trip.people.length }} คน · {{ trip.expenses.length }} รายการ · {{ groupedExpenses.length }} ร้าน</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" @click="modal='trips'" style="font-size:12px;"><i class="fa-solid fa-plane-departure"></i> ทริปทั้งหมด</button>
+        <button class="btn btn-lime" @click="openSummary" style="font-size:12px;"><i class="fa-solid fa-receipt"></i> สรุปยอด</button>
+      </div>
+    </div>
+
+    <div class="canvas-body">
+
+      <!-- HERO STATS -->
+      <div class="trip-hero" v-if="trip.expenses.length > 0">
+        <div class="hero-stat">
+          <div class="hero-stat-val">{{ formatNumber(totalTripPrice) }}</div>
+          <div class="hero-stat-label">Grand Total (฿)</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">{{ trip.people.length }}</div>
+          <div class="hero-stat-label">สมาชิก</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">{{ groupedExpenses.length }}</div>
+          <div class="hero-stat-label">ร้าน/สถานที่</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">{{ trip.expenses.length }}</div>
+          <div class="hero-stat-label">รายการ</div>
+        </div>
+      </div>
+
+      <!-- SETTLEMENTS -->
+      <div v-if="settlements.length > 0" style="margin-bottom:22px;">
+        <div class="sec-hdr">
+          <div class="sec-title"><span class="sec-title-dot"></span>ต้องโอนให้ใคร</div>
+          <span style="font-size:11px;color:var(--muted);">{{ settlements.length }} รายการ</span>
+        </div>
+        <div class="settle-list">
+          <div v-for="s in settlements" :key="s.from+s.to" class="settle-row">
+            <span class="settle-name" style="color:var(--red);">{{ s.from }}</span>
+            <span class="settle-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+            <span class="settle-name" style="color:var(--accent);">{{ s.to }}</span>
+            <span style="font-size:11px;color:var(--muted);flex:1;">เพื่อเคลียร์ยอดสุทธิ</span>
+            <span class="settle-amt">{{ formatNumber(s.amount) }} ฿</span>
+            <span class="settle-badge">โอน</span>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="summary.length > 0 && totalTripPrice > 0" style="margin-bottom:22px;background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r2);padding:12px 16px;font-size:13px;color:var(--accent);display:flex;align-items:center;gap:8px;">
+        <i class="fa-solid fa-check-circle"></i> ยอดทุกคนสมดุลแล้ว ไม่ต้องโอนเพิ่ม
+      </div>
+
+      <!-- NET CARDS -->
+      <div v-if="summary.length > 0" style="margin-bottom:22px;">
+        <div class="sec-hdr">
+          <div class="sec-title"><span class="sec-title-dot" style="background:var(--accent);"></span>สรุปรายคน</div>
+        </div>
+        <div class="net-grid">
+          <div v-for="(p, i) in summary" :key="p.name" class="net-card">
+            <div class="net-name">
+              <span class="net-avatar" :class="'av-'+((trip.people.indexOf(p.name))%6)">{{ p.name[0] }}</span>
+              {{ p.name }}
+            </div>
+            <div class="net-rows">
+              <div class="net-row"><span class="net-row-label">จ่ายก่อน</span><span class="mono" style="font-size:12px;">{{ formatNumber(p.paid) }}</span></div>
+              <div class="net-row"><span class="net-row-label">ใช้ไป</span><span class="mono" style="font-size:12px;">{{ formatNumber(p.consumed) }}</span></div>
+            </div>
+            <div class="net-total" :class="p.net>0?'pos':p.net<0?'neg':'zero'">
+              {{ p.net > 0 ? '+' : '' }}{{ formatNumber(p.net) }} ฿
+            </div>
+            <div style="font-size:10px;font-weight:700;margin-top:3px;" :class="p.net>0?'pos':p.net<0?'neg':'zero'">
+              {{ p.net > 0 ? '💚 รับคืน' : p.net < 0 ? '🔴 ต้องจ่าย' : '✅ เท่ากัน' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM GROUPS -->
+      <div class="sec-hdr">
+        <div class="sec-title"><span class="sec-title-dot" style="background:var(--accent);"></span>รายการทั้งหมด</div>
+      </div>
+
+      <div v-if="groupedExpenses.length === 0" class="empty">
+        <i class="fa-solid fa-utensils"></i>
+        <p>ยังไม่มีรายการ<br>เพิ่มร้านและรายการในแถบซ้ายมือ</p>
+      </div>
+
+      <div v-for="g in groupedExpenses" :key="g.name" class="shop-group">
+        <div class="shop-hd">
+          <i class="fa-solid fa-location-dot" style="color:var(--accent);"></i>
+          <span class="shop-hd-name">{{ g.name }}</span>
+          <span class="shop-badge">{{ formatNumber(g.total) }} ฿</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="dt">
+            <thead><tr>
+              <th class="td-l dt-sticky-hd" style="min-width:160px;">รายการ</th>
+              <th>ราคา</th>
+              <th v-for="p in trip.people" :key="p">{{ p }}</th>
+              <th>ผู้จ่าย</th>
+              <th style="width:70px;"></th>
+            </tr></thead>
+            <tbody>
+              <tr v-for="ex in g.items" :key="ex.id"
+                draggable="true" @dragstart="dragStartItem($event,ex.id)" @drop="dropItem($event,ex.id)" @dragover.prevent>
+                <td class="td-l dt-sticky">{{ ex.item }}</td>
+                <td class="mono" style="font-weight:700;color:var(--heading);">{{ formatNumber(ex.price) }}</td>
+                <td v-for="p in trip.people" :key="p">
+                  <span v-if="getAmt(ex,p)>0" class="mono-val">{{ formatNumber(getAmt(ex,p)) }}</span>
+                  <span v-else class="dash">—</span>
+                </td>
+                <td><span class="payer-badge">{{ ex.payer }}</span></td>
+                <td>
+                  <div style="display:flex;gap:4px;justify-content:center;">
+                    <button class="ico edt" @click="editExpense(ex)"><i class="fa-solid fa-pen"></i></button>
+                    <button class="ico del" @click="removeExpense(ex.id)"><i class="fa-solid fa-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /canvas-body -->
+  </div><!-- /canvas -->
+</div><!-- /shell -->
+
+</div><!-- #app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script>
+const { createApp, reactive, computed, watch, onMounted, ref } = Vue;
+
+const COLORS = ['#b8f56a','#6af5e0','#f56a8a','#f5c56a','#a06af5','#6aa0f5'];
+const LS_KEY = 'tripsplit_v1';
+
+function blankTrip(name = 'ทริปใหม่') {
+  return { id: Date.now(), name, people: [], expenses: [], savedShops: [], shopMemberMap: {}, shopDefaults: {}, payment: { type: 'qrcode', detail: '', name: '', bankName: '', qrImage: null }, backups: [] };
+}
+
+createApp({
+  setup() {
+    const trips = ref([]);
+    const currentTripId = ref(null);
+    const modal = ref('');
+    const toastMsg = ref('');
+    const zoomLevel = ref(1);
+    const editingTripName = ref(false);
+    const tempTripName = ref('');
+    const newTripName = ref('');
+    const newPerson = ref('');
+    const showMemberInput = ref(false);
+    const currentShop = ref('');
+    const shopDefaultPayer = ref('');
+    const activeMembers = ref([]);
+    const form = ref({ id: null, item: '', price: null, payer: '', consumers: [] });
+    const splitMode = ref('equal');
+    const customAmounts = ref({});
+    const editingId = ref(null);
+    const editShopIdx = ref(-1);
+    const tempShopName = ref('');
+    const currentBkId = ref(null);
+    const tripColors = COLORS;
+
+    // Current trip computed
+    const trip = computed(() => trips.value.find(t => t.id === currentTripId.value) || blankTrip());
+
+    function save() {
+      localStorage.setItem(LS_KEY, JSON.stringify({ trips: trips.value, currentId: currentTripId.value, currentBkId: currentBkId.value }));
+    }
+    function saveAll() { save(); }
+
+    function load() {
+      try {
+        const d = JSON.parse(localStorage.getItem(LS_KEY));
+        if (d) {
+          trips.value = d.trips || [];
+          currentTripId.value = d.currentId;
+          currentBkId.value = d.currentBkId;
+          if (!trips.value.find(t => t.id === currentTripId.value) && trips.value.length > 0) currentTripId.value = trips.value[0].id;
+          if (trips.value.length === 0) { trips.value.push(blankTrip('ทริปแรก')); currentTripId.value = trips.value[0].id; }
+          syncSidebar();
+        } else {
+          const t = blankTrip('ทริปแรก'); trips.value.push(t); currentTripId.value = t.id;
+        }
+      } catch { const t = blankTrip('ทริปแรก'); trips.value.push(t); currentTripId.value = t.id; }
+    }
+
+    function syncSidebar() {
+      const t = trip.value;
+      if (t.savedShops.length > 0) {
+        currentShop.value = t.savedShops[t.savedShops.length - 1];
+        activeMembers.value = t.shopMemberMap[currentShop.value] ? [...t.shopMemberMap[currentShop.value]] : [...t.people];
+        shopDefaultPayer.value = t.shopDefaults[currentShop.value] || '';
+        form.value.payer = shopDefaultPayer.value;
+      } else {
+        currentShop.value = ''; activeMembers.value = [...t.people]; shopDefaultPayer.value = '';
+      }
+      form.value.consumers = [...activeMembers.value];
+    }
+
+    onMounted(() => { load(); });
+
+    // TRIP
+    function createTrip() {
+      const n = newTripName.value.trim() || 'ทริปใหม่';
+      const t = blankTrip(n); trips.value.push(t); currentTripId.value = t.id;
+      newTripName.value = ''; save(); syncSidebar(); toast('สร้างทริป "' + n + '" แล้ว');
+    }
+    function switchTrip(id) {
+      currentTripId.value = id; currentBkId.value = null; closeModal(); save(); syncSidebar();
+    }
+    function deleteTrip(id) {
+      if (!confirm('ลบทริปนี้?')) return;
+      trips.value = trips.value.filter(t => t.id !== id);
+      if (trips.value.length === 0) { const t = blankTrip('ทริปแรก'); trips.value.push(t); currentTripId.value = t.id; }
+      else if (currentTripId.value === id) { currentTripId.value = trips.value[0].id; }
+      save(); syncSidebar();
+    }
+    function startEditTripName() { tempTripName.value = trip.value.name; editingTripName.value = true; }
+    function saveTripName() { if (tempTripName.value) trip.value.name = tempTripName.value.trim(); editingTripName.value = false; save(); }
+    function resetTrip() { if (!confirm('รีเซ็ตทริปนี้?')) return; const t = trip.value; t.expenses = []; t.backups = []; currentBkId.value = null; form.value = { id: null, item: '', price: null, payer: '', consumers: [] }; editingId.value = null; save(); toast('รีเซ็ตแล้ว'); }
+
+    // PEOPLE
+    function addPerson() { const n = newPerson.value.trim(); if (!n || trip.value.people.includes(n)) return; trip.value.people.push(n); newPerson.value = ''; save(); }
+    function removePerson(i) { if (!confirm('ลบสมาชิก?')) return; const rm = trip.value.people.splice(i, 1)[0]; activeMembers.value = activeMembers.value.filter(p => p !== rm); save(); }
+
+    // SHOP
+    function addShop() {
+      const n = currentShop.value.trim(); if (!n) return;
+      if (!trip.value.savedShops.includes(n)) trip.value.savedShops.push(n);
+      trip.value.shopMemberMap[n] = [...activeMembers.value];
+      if (shopDefaultPayer.value) trip.value.shopDefaults[n] = shopDefaultPayer.value;
+      save(); toast('บันทึกร้าน "' + n + '"');
+    }
+    function onShopChange() {
+      const n = currentShop.value;
+      if (trip.value.shopMemberMap[n]) { activeMembers.value = [...trip.value.shopMemberMap[n]]; form.value.consumers = [...activeMembers.value]; }
+      shopDefaultPayer.value = trip.value.shopDefaults[n] || '';
+      if (shopDefaultPayer.value) form.value.payer = shopDefaultPayer.value;
+    }
+    function onDefaultPayerChange() { if (currentShop.value) trip.value.shopDefaults[currentShop.value] = shopDefaultPayer.value; form.value.payer = shopDefaultPayer.value; save(); }
+    function saveShopEdit(i) { const old = trip.value.savedShops[i]; trip.value.savedShops[i] = tempShopName.value.trim(); trip.value.expenses.forEach(e => { if (e.shop === old) e.shop = tempShopName.value.trim(); }); editShopIdx.value = -1; save(); toast('อัปเดตร้านแล้ว'); }
+    function removeShop(i) { const s = trip.value.savedShops[i]; if (!confirm(`ลบร้าน "${s}"?`)) return; trip.value.savedShops.splice(i, 1); trip.value.expenses = trip.value.expenses.filter(e => e.shop !== s); save(); toast('ลบร้านแล้ว'); }
+    function pickShop(s) { currentShop.value = s; onShopChange(); closeModal(); }
+    function toggleAllActive(all) { activeMembers.value = all ? [...trip.value.people] : []; if (currentShop.value) trip.value.shopMemberMap[currentShop.value] = [...activeMembers.value]; form.value.consumers = [...activeMembers.value]; }
+    function toggleActive(p) { const i = activeMembers.value.indexOf(p); if (i > -1) activeMembers.value.splice(i, 1); else activeMembers.value.push(p); if (currentShop.value) trip.value.shopMemberMap[currentShop.value] = [...activeMembers.value]; form.value.consumers = [...activeMembers.value]; }
+
+    // FORM
+    const sumCustom = computed(() => Object.values(customAmounts.value).reduce((a, b) => a + (parseFloat(b) || 0), 0));
+    const customSumClass = computed(() => { const s = sumCustom.value, p = form.value.price || 0; if (Math.abs(s - p) < 0.01 && p > 0) return 'sum-ok'; if (s > p) return 'sum-err'; return 'sum-warn'; });
+    const formValid = computed(() => {
+      if (!form.value.item || !form.value.price || form.value.price <= 0 || !form.value.payer) return false;
+      if (splitMode.value === 'equal') return form.value.consumers.length > 0;
+      return Math.abs(sumCustom.value - form.value.price) < 0.011;
+    });
+    function toggleConsumers(all) { form.value.consumers = all ? [...activeMembers.value] : []; }
+    function toggleConsumer(p) { const i = form.value.consumers.indexOf(p); if (i > -1) form.value.consumers.splice(i, 1); else form.value.consumers.push(p); }
+    function setCustom(p, e) { customAmounts.value[p] = e.target.value === '' ? 0 : parseFloat(e.target.value); }
+
+    function saveExpense() {
+      const ex = { id: form.value.id || Date.now(), shop: currentShop.value || 'ไม่ระบุร้าน', item: form.value.item, price: form.value.price, payer: form.value.payer, consumers: [...form.value.consumers], customSplit: splitMode.value === 'custom', customAmounts: { ...customAmounts.value } };
+      if (!trip.value.savedShops.includes(ex.shop)) trip.value.savedShops.push(ex.shop);
+      if (form.value.id) { const idx = trip.value.expenses.findIndex(e => e.id === form.value.id); trip.value.expenses[idx] = ex; toast('อัปเดตแล้ว'); }
+      else { trip.value.expenses.push(ex); toast('บันทึกแล้ว'); }
+      cancelEdit(); save();
+    }
+    function editExpense(ex) { form.value = { ...ex }; splitMode.value = ex.customSplit ? 'custom' : 'equal'; customAmounts.value = { ...ex.customAmounts }; editingId.value = ex.id; currentShop.value = ex.shop; onShopChange(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function cancelEdit() { form.value = { id: null, item: '', price: null, payer: form.value.payer, consumers: [...activeMembers.value] }; editingId.value = null; customAmounts.value = {}; }
+    function removeExpense(id) { if (!confirm('ลบรายการ?')) return; trip.value.expenses = trip.value.expenses.filter(e => e.id !== id); save(); toast('ลบแล้ว'); }
+
+    // COMPUTED
+    const groupedExpenses = computed(() => {
+      return trip.value.savedShops.map(n => {
+        const items = trip.value.expenses.filter(e => e.shop === n);
+        return items.length > 0 ? { name: n, items, total: items.reduce((s, e) => s + e.price, 0) } : null;
+      }).filter(Boolean);
+    });
+    const totalTripPrice = computed(() => trip.value.expenses.reduce((s, e) => s + e.price, 0));
+    const summary = computed(() => {
+      const map = {}; trip.value.people.forEach(p => map[p] = { name: p, consumed: 0, paid: 0, net: 0 });
+      trip.value.expenses.forEach(ex => {
+        if (map[ex.payer]) map[ex.payer].paid += ex.price;
+        if (ex.customSplit) { Object.entries(ex.customAmounts).forEach(([p, a]) => { if (map[p]) map[p].consumed += a; }); }
+        else { ex.consumers.forEach(c => { if (map[c]) map[c].consumed += ex.price / ex.consumers.length; }); }
+      });
+      return Object.values(map).map(p => { p.net = Math.round(p.paid - p.consumed); return p; }).sort((a, b) => b.net - a.net);
+    });
+    const settlements = computed(() => {
+      const debts = summary.value.map(p => ({ name: p.name, net: p.net })).filter(p => p.net !== 0);
+      const payers = debts.filter(p => p.net > 0).sort((a, b) => b.net - a.net);
+      const owers = debts.filter(p => p.net < 0).sort((a, b) => a.net - b.net);
+      const result = []; let pi = 0, oi = 0;
+      while (pi < payers.length && oi < owers.length) {
+        const p = payers[pi], o = owers[oi];
+        const amt = Math.min(p.net, Math.abs(o.net));
+        if (amt > 0) result.push({ from: o.name, to: p.name, amount: amt });
+        p.net -= amt; o.net += amt;
+        if (p.net === 0) pi++; if (o.net === 0) oi++;
+      }
+      return result;
+    });
+
+    // HELPERS
+    function getAmt(ex, p) { if (ex.customSplit) return ex.customAmounts[p] || 0; return ex.consumers.includes(p) ? ex.price / ex.consumers.length : 0; }
+    function getShopSub(items, p) { return items.reduce((s, ex) => s + getAmt(ex, p), 0); }
+    function formatNumber(n) { return (n || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+    function formatCurrency(n) { return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(n); }
+    function toast(msg) { toastMsg.value = msg; setTimeout(() => toastMsg.value = '', 2200); }
+    function closeModal() { modal.value = ''; editShopIdx.value = -1; }
+    function openSummary() { modal.value = 'summary'; setTimeout(() => autoFit(), 400); }
+
+    // BACKUP
+    function saveBk() { const n = prompt('ชื่อ Snapshot:') || new Date().toLocaleString(); const id = Date.now(); const b = { id, name: n, time: new Date().toLocaleString(), data: JSON.parse(JSON.stringify({ expenses: trip.value.expenses, people: trip.value.people, savedShops: trip.value.savedShops, shopMemberMap: trip.value.shopMemberMap, shopDefaults: trip.value.shopDefaults, payment: trip.value.payment })) }; trip.value.backups.unshift(b); currentBkId.value = id; save(); toast('บันทึก Snapshot แล้ว'); }
+    function updateBk() { const idx = trip.value.backups.findIndex(b => b.id === currentBkId.value); if (idx > -1) { trip.value.backups[idx].data = JSON.parse(JSON.stringify({ expenses: trip.value.expenses, people: trip.value.people, savedShops: trip.value.savedShops, shopMemberMap: trip.value.shopMemberMap, shopDefaults: trip.value.shopDefaults, payment: trip.value.payment })); trip.value.backups[idx].time = new Date().toLocaleString(); save(); toast('อัปเดต Snapshot แล้ว'); } }
+    function restoreBk(i) { if (!confirm('โหลด Snapshot นี้?')) return; const b = trip.value.backups[i]; const t = trip.value; Object.assign(t, JSON.parse(JSON.stringify(b.data))); t.backups = trips.value.find(x => x.id === currentTripId.value).backups; currentBkId.value = b.id; save(); syncSidebar(); closeModal(); toast('โหลด Snapshot แล้ว'); }
+    function deleteBk(i) { if (trip.value.backups[i].id === currentBkId.value) currentBkId.value = null; trip.value.backups.splice(i, 1); save(); }
+
+    // EXPORT/IMPORT
+    function exportAllTrips() { const blob = new Blob([JSON.stringify({ trips: trips.value, exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `TripSplit_Backup_${Date.now()}.json`; a.click(); }
+    function triggerImport() { document.getElementById('importFile').click(); }
+    function importTrips(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { try { const d = JSON.parse(ev.target.result); if (confirm('นำเข้าข้อมูล? (จะเขียนทับทั้งหมด)')) { trips.value = d.trips; currentTripId.value = trips.value[0]?.id; save(); syncSidebar(); closeModal(); toast('นำเข้าสำเร็จ'); } } catch { alert('ไฟล์ไม่ถูกต้อง'); } }; r.readAsText(f); }
+
+    // QR
+    function uploadQR(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = v => { trip.value.payment.qrImage = v.target.result; save(); }; r.readAsDataURL(f); }
+
+    // ZOOM / CAPTURE
+    function zoom(d) { zoomLevel.value = Math.max(0.1, Math.min(3, zoomLevel.value + d)); }
+    function autoFit() { const c = document.getElementById('captureArea'); if (c) { const sw = c.parentElement.clientWidth - 56; zoomLevel.value = c.offsetWidth > sw ? sw / c.offsetWidth : 1; } }
+    function captureReceipt(fmt) { const oz = zoomLevel.value; zoomLevel.value = 1; Vue.nextTick(() => { const el = document.getElementById('captureArea'); html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => { const a = document.createElement('a'); a.download = `TripSplit_${Date.now()}.${fmt}`; a.href = canvas.toDataURL(`image/${fmt === 'jpg' ? 'jpeg' : 'png'}`, 0.92); a.click(); zoomLevel.value = oz; }); }); }
+
+    // DRAG
+    function dragStartItem(e, id) { e.dataTransfer.setData('itemId', id); }
+    function dropItem(e, tId) { const fId = parseInt(e.dataTransfer.getData('itemId')); const arr = trip.value.expenses; const fi = arr.findIndex(x => x.id === fId); const ti = arr.findIndex(x => x.id === tId); if (fi > -1 && ti > -1) { const item = arr.splice(fi, 1)[0]; arr.splice(ti, 0, item); save(); } }
+
+    return {
+      trips, currentTripId, modal, toastMsg, zoomLevel, trip, editingTripName, tempTripName, newTripName,
+      newPerson, showMemberInput, currentShop, shopDefaultPayer, activeMembers,
+      form, splitMode, customAmounts, editingId, editShopIdx, tempShopName, currentBkId, tripColors,
+      sumCustom, customSumClass, formValid, groupedExpenses, totalTripPrice, summary, settlements,
+      createTrip, switchTrip, deleteTrip, startEditTripName, saveTripName, resetTrip,
+      addPerson, removePerson, addShop, onShopChange, onDefaultPayerChange, saveShopEdit, removeShop, pickShop,
+      toggleAllActive, toggleActive, saveExpense, editExpense, cancelEdit, removeExpense,
+      toggleConsumers, toggleConsumer, setCustom, getAmt, getShopSub,
+      formatNumber, formatCurrency, toast, closeModal, openSummary,
+      saveBk, updateBk, restoreBk, deleteBk,
+      exportAllTrips, triggerImport, importTrips, uploadQR,
+      zoom, autoFit, captureReceipt, dragStartItem, dropItem, saveAll,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
